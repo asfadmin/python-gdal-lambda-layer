@@ -1,0 +1,1 @@
+# Python GDAL lambda layer
