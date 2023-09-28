@@ -1,0 +1,45 @@
+name: Build
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  layer-zip:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/lambgeo/lambda-gdal:${{ matrix.gdal-version }}-python${{ matrix.python-version}}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - gdal-version: "3.5"
+            python-version: "3.8"
+
+          - gdal-version: "3.5"
+            python-version: "3.9"
+
+          - gdal-version: "3.6"
+            python-version: "3.9"
+
+          - gdal-version: "3.6"
+            python-version: "3.10"
+
+    env:
+      ARTIFACT_NAME: lambda-gdal${{ matrix.gdal-version }}-python${{ matrix.python-version }}-${{ github.ref_name }}
+
+    steps:
+      - name: Install Build Dependencies
+        run: yum install -y tar gzip zip binutils
+
+      - uses: actions/checkout@v2
+
+      - name: Build lambda layer
+        run: bash create-layer.sh
+
+      - name: Upload release asset
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: /tmp/package.zip
+          asset_name: ${{ env.ARTIFACT_NAME }}.zip
